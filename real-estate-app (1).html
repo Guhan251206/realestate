@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EstateIQ - Real Estate Price Forecasting</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #C9A84C; --gold-light: #E8C97A; --gold-dim: rgba(201,168,76,0.15);
+    --obsidian: #0B0C0E; --surface: #111318; --surface2: #181C24; --surface3: #1F2430;
+    --border: rgba(201,168,76,0.2); --border-soft: rgba(255,255,255,0.07);
+    --text: #F0EDE6; --text-muted: #8A8680; --text-dim: #5C5955;
+    --danger: #C94C4C; --success: #4CC97A;
+    --radius: 12px; --radius-lg: 20px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'DM Sans',sans-serif; background:var(--obsidian); color:var(--text); min-height:100vh; overflow-x:hidden; }
+  body::before { content:''; position:fixed; inset:0; background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(201,168,76,0.08) 0%, transparent 60%), radial-gradient(ellipse 40% 40% at 90% 90%, rgba(76,139,201,0.05) 0%, transparent 60%); pointer-events:none; z-index:0; }
+  .page { display:none; min-height:100vh; position:relative; z-index:1; }
+  .page.active { display:flex; flex-direction:column; animation:fadeUp 0.45s ease; }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+  nav { display:flex; align-items:center; justify-content:space-between; padding:20px 48px; border-bottom:1px solid var(--border-soft); backdrop-filter:blur(12px); background:rgba(11,12,14,0.7); position:sticky; top:0; z-index:100; }
+  .nav-logo { font-family:'Cormorant Garamond',serif; font-size:1.5rem; font-weight:600; color:var(--gold); letter-spacing:0.05em; }
+  .nav-logo span { color:var(--text); }
+  .nav-links { display:flex; gap:32px; }
+  .nav-link { font-size:0.875rem; font-weight:500; color:var(--text-muted); cursor:pointer; transition:color 0.2s; letter-spacing:0.03em; }
+  .nav-link:hover, .nav-link.active-link { color:var(--gold); }
+  .nav-user { display:flex; align-items:center; gap:12px; }
+  .avatar { width:34px; height:34px; border-radius:50%; background:var(--gold-dim); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:0.75rem; color:var(--gold); font-weight:600; background-size:cover; background-position:center; }
+  .btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:12px 28px; border-radius:var(--radius); font-family:'DM Sans',sans-serif; font-size:0.875rem; font-weight:500; cursor:pointer; border:none; transition:all 0.25s; letter-spacing:0.03em; }
+  .btn-gold { background:linear-gradient(135deg,var(--gold),var(--gold-light)); color:#0B0C0E; }
+  .btn-gold:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(201,168,76,0.35); }
+  .btn-outline { background:transparent; border:1px solid var(--border); color:var(--text); }
+  .btn-outline:hover { border-color:var(--gold); color:var(--gold); background:var(--gold-dim); }
+  .btn-ghost { background:var(--surface2); color:var(--text-muted); }
+  .btn-ghost:hover { background:var(--surface3); color:var(--text); }
+  .btn-lg { padding:16px 36px; font-size:1rem; border-radius:14px; }
+  .btn-sm { padding:8px 18px; font-size:0.8rem; }
+  .card { background:var(--surface); border:1px solid var(--border-soft); border-radius:var(--radius-lg); padding:32px; }
+  .card-gold-top { border-top:2px solid var(--gold); }
+  .form-group { display:flex; flex-direction:column; gap:8px; }
+  label { font-size:0.8rem; font-weight:500; color:var(--text-muted); letter-spacing:0.05em; text-transform:uppercase; }
+  input, select { background:var(--surface2); border:1px solid var(--border-soft); border-radius:var(--radius); padding:12px 16px; font-family:'DM Sans',sans-serif; font-size:0.9rem; color:var(--text); outline:none; transition:border-color 0.2s; width:100%; }
+  input::placeholder { color:var(--text-dim); }
+  input:focus, select:focus { border-color:var(--gold); box-shadow:0 0 0 3px var(--gold-dim); }
+  select option { background:var(--surface2); }
+  .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  .form-full { grid-column:1/-1; }
+  /* AUTH */
+  .auth-wrap { flex:1; display:flex; align-items:center; justify-content:center; padding:48px 24px; }
+  .auth-box { width:100%; max-width:440px; background:var(--surface); border:1px solid var(--border); border-radius:24px; padding:48px 40px; box-shadow:0 32px 80px rgba(0,0,0,0.5); }
+  .auth-logo { font-family:'Cormorant Garamond',serif; font-size:2rem; color:var(--gold); text-align:center; margin-bottom:4px; }
+  .auth-sub { text-align:center; color:var(--text-muted); font-size:0.875rem; margin-bottom:36px; }
+  .auth-form { display:flex; flex-direction:column; gap:20px; }
+  .auth-divider { text-align:center; color:var(--text-dim); font-size:0.8rem; }
+  .auth-switch { text-align:center; font-size:0.85rem; color:var(--text-muted); margin-top:8px; }
+  .auth-switch span { color:var(--gold); cursor:pointer; font-weight:500; }
+  .auth-switch span:hover { text-decoration:underline; }
+  .error-msg { color:var(--danger); font-size:0.8rem; min-height:18px; }
+  /* HOME */
+  .hero { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:80px 48px; text-align:center; gap:32px; }
+  .hero-badge { display:inline-flex; align-items:center; gap:8px; background:var(--gold-dim); border:1px solid var(--border); padding:6px 16px; border-radius:100px; font-size:0.75rem; color:var(--gold); letter-spacing:0.08em; text-transform:uppercase; }
+  .hero-badge::before { content:'*'; font-size:0.5rem; }
+  .hero-title { font-family:'Cormorant Garamond',serif; font-size:clamp(2.8rem,6vw,5rem); font-weight:300; line-height:1.1; color:var(--text); max-width:800px; }
+  .hero-title em { font-style:italic; color:var(--gold); }
+  .hero-desc { font-size:1.05rem; color:var(--text-muted); line-height:1.7; max-width:560px; }
+  .hero-btns { display:flex; gap:16px; flex-wrap:wrap; justify-content:center; }
+  .hero-stats { display:flex; gap:48px; margin-top:24px; padding-top:32px; border-top:1px solid var(--border-soft); }
+  .stat { text-align:center; }
+  .stat-val { font-family:'Cormorant Garamond',serif; font-size:2rem; font-weight:600; color:var(--gold); }
+  .stat-label { font-size:0.75rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.08em; margin-top:2px; }
+  /* SECTION */
+  .section-wrap { flex:1; padding:40px 48px; max-width:1100px; margin:0 auto; width:100%; }
+  .section-head { margin-bottom:32px; }
+  .section-title { font-family:'Cormorant Garamond',serif; font-size:2rem; font-weight:400; color:var(--text); }
+  .section-title span { color:var(--gold); }
+  .section-sub { color:var(--text-muted); font-size:0.875rem; margin-top:6px; }
+  /* TABS */
+  .tabs { display:flex; gap:4px; background:var(--surface2); border-radius:var(--radius); padding:4px; width:fit-content; margin-bottom:32px; }
+  .tab { padding:10px 24px; border-radius:9px; font-size:0.875rem; font-weight:500; cursor:pointer; color:var(--text-muted); transition:all 0.2s; }
+  .tab.active { background:var(--surface); color:var(--gold); box-shadow:0 2px 8px rgba(0,0,0,0.3); }
+  .tab-panel { display:none; }
+  .tab-panel.active { display:block; animation:fadeUp 0.3s ease; }
+  /* LISTINGS */
+  .listings-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:24px; }
+  .prop-card { background:var(--surface); border:1px solid var(--border-soft); border-radius:var(--radius-lg); overflow:hidden; transition:transform 0.25s,box-shadow 0.25s; cursor:pointer; }
+  .prop-card:hover { transform:translateY(-4px); box-shadow:0 16px 40px rgba(0,0,0,0.4); }
+  .prop-img-wrap { height:180px; overflow:hidden; position:relative; }
+  .prop-img { width:100%; height:100%; background:var(--surface3); display:flex; align-items:center; justify-content:center; font-size:3.5rem; transition:transform 0.4s; }
+  .prop-card:hover .prop-img { transform:scale(1.05); }
+  .prop-badge { position:absolute; top:12px; right:12px; padding:4px 10px; border-radius:6px; font-size:0.7rem; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; }
+  .badge-sale { background:rgba(201,168,76,0.9); color:#0B0C0E; }
+  .badge-rent { background:rgba(76,139,201,0.9); color:#fff; }
+  .badge-plot { background:rgba(76,201,122,0.9); color:#0B0C0E; }
+  .prop-body { padding:20px; }
+  .prop-head-row { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:6px; }
+  .map-btn { border:1px solid var(--border-soft); background:var(--surface2); color:var(--gold); border-radius:8px; padding:4px; width:32px; height:32px; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; }
+  .map-btn:hover { border-color:var(--gold); background:var(--gold-dim); }
+  .map-btn img { width:20px; height:20px; border-radius:4px; display:block; }
+  .admin-mini-btn { border:1px solid var(--border-soft); background:var(--surface2); color:var(--text); border-radius:8px; width:32px; height:32px; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; font-size:0.9rem; }
+  .admin-mini-btn:hover { border-color:var(--gold); color:var(--gold); }
+  .prop-loc { font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px; }
+  .prop-name { font-size:1rem; font-weight:500; color:var(--text); margin-bottom:12px; }
+  .prop-price { font-family:'Cormorant Garamond',serif; font-size:1.4rem; color:var(--gold); font-weight:600; }
+  .prop-meta { display:flex; gap:16px; margin-top:12px; padding-top:12px; border-top:1px solid var(--border-soft); flex-wrap:wrap; }
+  .prop-meta-item { font-size:0.78rem; color:var(--text-muted); }
+  /* RESULT */
+  .result-hero { background:linear-gradient(135deg,var(--surface),var(--surface2)); border:1px solid var(--border); border-radius:var(--radius-lg); padding:40px; margin-bottom:32px; display:flex; align-items:center; justify-content:space-between; gap:24px; }
+  .result-label { font-size:0.8rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:8px; }
+  .result-price { font-family:'Cormorant Garamond',serif; font-size:3.5rem; color:var(--gold); font-weight:600; line-height:1; }
+  .result-price-sub { font-size:0.85rem; color:var(--text-muted); margin-top:8px; }
+  .result-confidence { background:var(--gold-dim); border:1px solid var(--border); border-radius:var(--radius); padding:16px 24px; text-align:center; min-width:130px; }
+  .conf-val { font-family:'Cormorant Garamond',serif; font-size:2rem; color:var(--gold); }
+  .conf-label { font-size:0.75rem; color:var(--text-muted); margin-top:4px; }
+  .chart-wrap { background:var(--surface); border:1px solid var(--border-soft); border-radius:var(--radius-lg); padding:28px; }
+  .chart-title { font-size:0.85rem; font-weight:600; color:var(--text); margin-bottom:20px; letter-spacing:0.03em; }
+  .reco-list { display:flex; flex-direction:column; gap:12px; }
+  .reco-item { background:var(--surface2); border:1px solid var(--border-soft); border-radius:var(--radius); padding:14px 16px; cursor:pointer; transition:border-color 0.2s,transform 0.2s; display:flex; justify-content:space-between; align-items:center; }
+  .reco-item:hover { border-color:var(--gold); transform:translateX(3px); }
+  .reco-name { font-size:0.875rem; font-weight:500; }
+  .reco-loc { font-size:0.75rem; color:var(--text-muted); margin-top:3px; }
+  .reco-price { font-family:'Cormorant Garamond',serif; font-size:1.1rem; color:var(--gold); white-space:nowrap; margin-left:12px; }
+  /* DETAILS GRID */
+  .details-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:16px; margin-bottom:28px; }
+  .detail-card { background:var(--surface2); border:1px solid var(--border-soft); border-radius:var(--radius); padding:16px 20px; }
+  .detail-label { font-size:0.72rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.07em; margin-bottom:6px; }
+  .detail-val { font-size:1rem; font-weight:500; color:var(--text); }
+  /* SPINNER */
+  .spinner-wrap { display:flex; flex-direction:column; align-items:center; gap:20px; padding:80px; }
+  .spinner { width:48px; height:48px; border:3px solid var(--border-soft); border-top-color:var(--gold); border-radius:50%; animation:spin 0.8s linear infinite; }
+  @keyframes spin { to{transform:rotate(360deg)} }
+  .spinner-text { color:var(--text-muted); font-size:0.875rem; }
+  .tag { background:var(--gold-dim); border:1px solid var(--border); color:var(--gold); padding:4px 12px; border-radius:100px; font-size:0.75rem; }
+  #toast { position:fixed; bottom:32px; right:32px; z-index:9999; background:var(--surface3); border:1px solid var(--border); color:var(--text); padding:14px 22px; border-radius:var(--radius); font-size:0.875rem; box-shadow:0 8px 32px rgba(0,0,0,0.4); transform:translateY(80px); opacity:0; transition:all 0.3s; pointer-events:none; }
+  #toast.show { transform:translateY(0); opacity:1; }
+  #toast.success { border-color:var(--success); }
+  #toast.error { border-color:var(--danger); }
+  .search-bar { display:flex; gap:12px; margin-bottom:28px; background:var(--surface); border:1px solid var(--border-soft); border-radius:var(--radius); padding:6px 6px 6px 16px; align-items:center; }
+  .search-bar input { background:transparent; border:none; flex:1; padding:6px 0; }
+  .search-bar input:focus { box-shadow:none; }
+  .filter-bar { display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+  .filter-chip { padding:7px 16px; border-radius:100px; font-size:0.8rem; background:var(--surface2); border:1px solid var(--border-soft); color:var(--text-muted); cursor:pointer; transition:all 0.2s; }
+  .filter-chip:hover, .filter-chip.active { background:var(--gold-dim); border-color:var(--border); color:var(--gold); }
+  .trend-up { color:var(--success); }
+  .admin-add-card { border:1px dashed var(--border); background:var(--surface2); min-height:280px; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+  .admin-add-inner { text-align:center; color:var(--gold); }
+  .admin-add-plus { font-size:2.2rem; line-height:1; margin-bottom:10px; }
+  .admin-modal { position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:1300; display:none; align-items:center; justify-content:center; padding:16px; }
+  .admin-modal.show { display:flex; }
+  .admin-modal-card { width:min(560px, 96vw); background:var(--surface); border:1px solid var(--border-soft); border-radius:16px; padding:18px; max-height:90vh; overflow:auto; }
+  .admin-modal-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+  .profile-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:1200; display:none; }
+  .profile-overlay.show { display:block; }
+  .profile-panel { position:fixed; top:76px; left:calc(100vw - 400px); width:min(380px, 92vw); max-height:85vh; background:var(--surface); border:1px solid var(--border-soft); border-radius:16px; z-index:1201; transform:scale(0.96); transform-origin:top right; opacity:0; pointer-events:none; transition:transform 0.2s ease, opacity 0.2s ease; padding:20px; overflow:auto; box-shadow:0 24px 70px rgba(0,0,0,0.45); }
+  .profile-panel.show { transform:scale(1); opacity:1; pointer-events:auto; }
+  .profile-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+  .profile-title { font-family:'Cormorant Garamond',serif; font-size:1.8rem; color:var(--gold); }
+  .profile-avatar { width:88px; height:88px; border-radius:50%; border:1px solid var(--border); object-fit:cover; background:var(--surface2); display:flex; align-items:center; justify-content:center; color:var(--gold); font-weight:600; margin:10px 0 18px; }
+  .profile-avatar-wrap { position:relative; width:88px; }
+  .avatar-edit-btn { position:absolute; right:-4px; bottom:10px; width:28px; height:28px; border-radius:50%; border:1px solid var(--border); background:var(--surface3); color:var(--gold); display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:0.9rem; }
+  .avatar-edit-btn:hover { background:var(--gold-dim); }
+  .hidden-file-input { display:none; }
+  .profile-email { color:var(--text-muted); font-size:0.9rem; margin:6px 0 14px; }
+  .profile-actions { display:flex; gap:10px; margin-top:14px; flex-wrap:wrap; }
+  .avatar.clickable { cursor:pointer; }
+  optgroup { color:var(--gold); font-size:0.8rem; }
+  @media(max-width:768px) {
+    nav { padding:16px 20px; } .nav-links { display:none; }
+    .hero { padding:40px 20px; } .hero-stats { gap:24px; }
+    .section-wrap { padding:24px 20px; } .form-grid { grid-template-columns:1fr; }
+    .result-hero { flex-direction:column; } .auth-box { padding:32px 24px; }
+  }
+</style>
+</head>
+<body>
+<div id="toast"></div>
+<div id="profile-overlay" class="profile-overlay" onclick="closeProfilePanel()"></div>
+<aside id="profile-panel" class="profile-panel" aria-hidden="true">
+  <div class="profile-head">
+    <div class="profile-title">Profile</div>
+    <button class="btn btn-ghost btn-sm" onclick="closeProfilePanel()">Close</button>
+  </div>
+  <div class="profile-avatar-wrap">
+    <img id="profile-picture-preview" class="profile-avatar" alt="Profile Picture">
+    <button class="avatar-edit-btn" type="button" onclick="triggerProfilePictureInput()" title="Edit profile picture">✎</button>
+  </div>
+  <div class="form-group">
+    <label>Name</label>
+    <input type="text" id="profile-name-input" placeholder="Your name">
+  </div>
+  <div class="form-group">
+    <label>Email</label>
+    <input type="email" id="profile-email" readonly>
+  </div>
+  <input class="hidden-file-input" type="file" id="profile-picture-input" accept="image/*" onchange="previewProfilePicture(this)">
+  <div class="error-msg" id="profile-msg" style="margin-top:10px"></div>
+  <div class="profile-actions">
+    <button class="btn btn-gold" onclick="saveProfileUpdates()">Save Changes</button>
+    <button class="btn btn-ghost" onclick="handleLogout()">Logout</button>
+  </div>
+</aside>
+<div id="admin-add-modal" class="admin-modal" onclick="closeAdminAddModal()">
+  <div class="admin-modal-card" onclick="event.stopPropagation()">
+    <div class="admin-modal-head">
+      <div id="admin-modal-title" class="profile-title" style="font-size:1.4rem">Add Property</div>
+      <button class="btn btn-ghost btn-sm" onclick="closeAdminAddModal()">Close</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Category</label>
+        <select id="a-cat"><option value="house">House</option><option value="land">Land</option></select>
+      </div>
+      <div class="form-group">
+        <label>Type</label>
+        <select id="a-type"><option value="sale">Sale</option><option value="rent">Rent</option><option value="plot">Plot</option></select>
+      </div>
+      <div class="form-group form-full">
+        <label>Name</label>
+        <input id="a-name" type="text" placeholder="Property name">
+      </div>
+      <div class="form-group">
+        <label>City</label>
+        <input id="a-city" type="text" placeholder="City">
+      </div>
+      <div class="form-group">
+        <label>Price Label</label>
+        <input id="a-price" type="text" placeholder="INR 70 L or INR 25,000/mo">
+      </div>
+      <div class="form-group">
+        <label>Area (sqft)</label>
+        <input id="a-area" type="number" min="100" placeholder="1200">
+      </div>
+      <div class="form-group">
+        <label>Property Type / Zone</label>
+        <input id="a-kind" type="text" placeholder="Apartment or Residential">
+      </div>
+      <div class="form-group">
+        <label>Beds</label>
+        <input id="a-beds" type="number" min="0" placeholder="3">
+      </div>
+      <div class="form-group">
+        <label>Baths</label>
+        <input id="a-baths" type="number" min="0" placeholder="2">
+      </div>
+      <div class="form-group form-full">
+        <div id="admin-add-err" class="error-msg"></div>
+        <button id="admin-modal-submit" class="btn btn-gold" style="width:100%" onclick="createPropertyFromAdmin()">Create Property</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LOGIN -->
+<div id="page-login" class="page active">
+  <div class="auth-wrap">
+    <div class="auth-box">
+      <div class="auth-logo">EstateIQ</div>
+      <div class="auth-sub">Sign in to your intelligence platform</div>
+      <div class="auth-form">
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" id="login-email" placeholder="you@example.com" autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="login-password" placeholder="********">
+        </div>
+        <div style="font-size:0.75rem;color:var(--text-dim);margin-top:-8px">Demo: demo@estate.iq / demo123</div>
+        <div class="error-msg" id="login-err"></div>
+        <button class="btn btn-gold btn-lg" onclick="handleLogin()" style="width:100%">Login</button>
+        <div class="auth-divider">- or -</div>
+        <div class="auth-switch">New here <span onclick="showPage('signup')">Create an account</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SIGNUP -->
+<div id="page-signup" class="page">
+  <div class="auth-wrap">
+    <div class="auth-box">
+      <div class="auth-logo">EstateIQ</div>
+      <div class="auth-sub">Create your forecasting account</div>
+      <div class="auth-form">
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" id="signup-name" placeholder="John Smith">
+        </div>
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" id="signup-email" placeholder="you@example.com">
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="signup-password" placeholder="Min. 6 characters">
+        </div>
+        <div class="form-group">
+          <label>Profile Picture (Optional)</label>
+          <input type="file" id="signup-picture" accept="image/*">
+        </div>
+        <div class="error-msg" id="signup-err"></div>
+        <button class="btn btn-gold btn-lg" onclick="handleSignup()" style="width:100%">Sign Up</button>
+        <div class="auth-divider">- or -</div>
+        <div class="auth-switch">Already have an account <span onclick="showPage('login')">Login</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!--HOME-->
+<div id="page-home" class="page">
+  <nav>
+    <div class="nav-logo">Estate<span>IQ</span></div>
+    <div class="nav-links">
+      <span class="nav-link active-link" onclick="showPage('home')">Home</span>
+      <span class="nav-link" onclick="showPage('predict')">Predict</span>
+      <span class="nav-link" onclick="showPage('listings')">Listings</span>
+    </div>
+    <div class="nav-user">
+      <div class="avatar clickable" id="nav-avatar" onclick="openProfilePanel(this)">U</div>
+    </div>
+  </nav>
+  <div class="hero">
+    <div class="hero-badge">AI-Powered Forecasting</div>
+    <h1 class="hero-title">Predict Real Estate Prices<br>with <em>Machine Intelligence</em></h1>
+    <p class="hero-desc">This application predicts real estate prices using machine learning based on user inputs - location, size, age, and property type - delivering accurate market valuations in seconds.</p>
+    <div class="hero-btns">
+      <button class="btn btn-gold btn-lg" onclick="showPage('predict')">Predict Price</button>
+      <button class="btn btn-outline btn-lg" onclick="showPage('listings')">Explore Properties</button>
+    </div>
+    <div class="hero-stats">
+      <div class="stat"><div class="stat-val">98.2%</div><div class="stat-label">Accuracy</div></div>
+      <div class="stat"><div class="stat-val">12K+</div><div class="stat-label">Properties</div></div>
+      <div class="stat"><div class="stat-val">38</div><div class="stat-label">TN Districts</div></div>
+      <div class="stat"><div class="stat-val">INR 85L</div><div class="stat-label">Avg. Prediction</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- PREDICT-->
+<div id="page-predict" class="page">
+  <nav>
+    <div class="nav-logo">Estate<span>IQ</span></div>
+    <div class="nav-links">
+      <span class="nav-link" onclick="showPage('home')">Home</span>
+      <span class="nav-link active-link" onclick="showPage('predict')">Predict</span>
+      <span class="nav-link" onclick="showPage('listings')">Listings</span>
+    </div>
+    <div class="nav-user">
+      <div class="avatar clickable" id="nav-avatar2" onclick="openProfilePanel(this)">U</div>
+    </div>
+  </nav>
+  <div class="section-wrap">
+    <div class="section-head">
+      <div class="section-title">Price <span>Prediction</span></div>
+      <div class="section-sub">Enter property details to receive an AI-powered valuation</div>
+    </div>
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('house')">House / Flat</div>
+      <div class="tab" onclick="switchTab('land')">Land / Plot</div>
+    </div>
+
+    <!-- HOUSE FORM -->
+    <div class="tab-panel active" id="tab-house">
+      <div class="card card-gold-top" style="max-width:700px">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>City / District</label>
+            <select id="h-city">
+              <option value="">Select location</option>
+              <optgroup label="Major Cities">
+                <option>Mumbai</option><option>Delhi</option><option>Bangalore</option>
+                <option>Hyderabad</option><option>Kolkata</option>
+              </optgroup>
+              <optgroup label="Tamil Nadu Districts">
+                <option>Chennai</option><option>Coimbatore</option><option>Madurai</option>
+                <option>Tiruchirappalli</option><option>Salem</option><option>Tirunelveli</option>
+                <option>Erode</option><option>Vellore</option><option>Thoothukudi</option>
+                <option>Dindigul</option><option>Thanjavur</option><option>Ranipet</option>
+                <option>Sivaganga</option><option>Kanchipuram</option><option>Chengalpattu</option>
+                <option>Krishnagiri</option><option>Dharmapuri</option><option>Namakkal</option>
+                <option>Cuddalore</option><option>Nagapattinam</option><option>Tiruvarur</option>
+                <option>Mayiladuthurai</option><option>Villupuram</option><option>Kallakurichi</option>
+                <option>Tiruvannamalai</option><option>Perambalur</option><option>Ariyalur</option>
+                <option>Pudukkottai</option><option>Ramanathapuram</option><option>Virudhunagar</option>
+                <option>Tenkasi</option><option>Tirupathur</option><option>The Nilgiris</option>
+                <option>Karur</option><option>Theni</option><option>Kanniyakumari</option>
+                <option>Tiruppur</option><option>Sivakasi</option>
+              </optgroup>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Property Type</label>
+            <select id="h-type">
+              <option value="">Select type</option>
+              <option>Apartment</option><option>Villa</option>
+              <option>Independent House</option><option>Studio</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Number of Bedrooms</label>
+            <select id="h-bed">
+              <option value="">Select BHK</option>
+              <option>1 BHK</option><option>2 BHK</option><option>3 BHK</option>
+              <option>4 BHK</option><option>5+ BHK</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Number of Toilets</label>
+            <select id="h-bath">
+              <option value="">Select</option>
+              <option>1</option><option>2</option><option>3</option><option>4</option><option>5+</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Property Age</label>
+            <select id="h-age">
+              <option value="">Select age</option>
+              <option>New Construction</option><option>0-2 years</option>
+              <option>2-5 years</option><option>5-10 years</option>
+              <option>10-20 years</option><option>20+ years</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Area (sq ft)</label>
+            <input type="number" id="h-area" placeholder="e.g. 1200" min="100">
+          </div>
+          <div class="form-group">
+            <label>Transaction Type</label>
+            <select id="h-trans">
+              <option value="">Sale or Rent</option>
+              <option>Sale</option><option>Rent</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Floor Number</label>
+            <input type="number" id="h-floor" placeholder="e.g. 3" min="0">
+          </div>
+          <div class="form-group form-full">
+            <div class="error-msg" id="predict-err"></div>
+            <button class="btn btn-gold" style="width:100%;padding:14px" onclick="runPrediction('house')">Predict House Price</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LAND FORM -->
+    <div class="tab-panel" id="tab-land">
+      <div class="card card-gold-top" style="max-width:700px">
+        <div class="form-grid">
+          <div class="form-group form-full">
+            <label>Location / District</label>
+            <select id="l-city">
+              <option value="">Select location</option>
+              <optgroup label="Major Cities">
+                <option>Mumbai</option><option>Delhi</option><option>Bangalore</option>
+                <option>Hyderabad</option><option>Kolkata</option>
+              </optgroup>
+              <optgroup label="Tamil Nadu Districts">
+                <option>Chennai</option><option>Coimbatore</option><option>Madurai</option>
+                <option>Tiruchirappalli</option><option>Salem</option><option>Tirunelveli</option>
+                <option>Erode</option><option>Vellore</option><option>Thoothukudi</option>
+                <option>Dindigul</option><option>Thanjavur</option><option>Ranipet</option>
+                <option>Sivaganga</option><option>Kanchipuram</option><option>Chengalpattu</option>
+                <option>Krishnagiri</option><option>Dharmapuri</option><option>Namakkal</option>
+                <option>Cuddalore</option><option>Nagapattinam</option><option>Tiruvarur</option>
+                <option>Mayiladuthurai</option><option>Villupuram</option><option>Kallakurichi</option>
+                <option>Tiruvannamalai</option><option>Perambalur</option><option>Ariyalur</option>
+                <option>Pudukkottai</option><option>Ramanathapuram</option><option>Virudhunagar</option>
+                <option>Tenkasi</option><option>Tirupathur</option><option>The Nilgiris</option>
+                <option>Karur</option><option>Theni</option><option>Kanniyakumari</option>
+                <option>Tiruppur</option><option>Sivakasi</option>
+              </optgroup>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Zone Type</label>
+            <select id="l-zone">
+              <option value="">Select zone</option>
+              <option>Residential</option><option>Commercial</option>
+              <option>Agricultural</option><option>Industrial</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Area (sq ft)</label>
+            <input type="number" id="l-area" placeholder="e.g. 5000" min="100">
+          </div>
+          <div class="form-group">
+            <label>Road Facing</label>
+            <select id="l-road">
+              <option value="">Select</option>
+              <option>East</option><option>West</option>
+              <option>North</option><option>South</option><option>Corner Plot</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Distance to City Centre</label>
+            <select id="l-prox">
+              <option value="">Select distance</option>
+              <option>0-5 km</option><option>5-10 km</option>
+              <option>10-20 km</option><option>20+ km</option>
+            </select>
+          </div>
+          <div class="form-group form-full">
+            <div class="error-msg" id="predict-land-err"></div>
+            <button class="btn btn-gold" style="width:100%;padding:14px" onclick="runPrediction('land')">Predict Land Price</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LISTINGS -->
+<div id="page-listings" class="page">
+  <nav>
+    <div class="nav-logo">Estate<span>IQ</span></div>
+    <div class="nav-links">
+      <span class="nav-link" onclick="showPage('home')">Home</span>
+      <span class="nav-link" onclick="showPage('predict')">Predict</span>
+      <span class="nav-link active-link" onclick="showPage('listings')">Listings</span>
+    </div>
+    <div class="nav-user">
+      <div class="avatar clickable" id="nav-avatar3" onclick="openProfilePanel(this)">U</div>
+    </div>
+  </nav>
+  <div class="section-wrap">
+    <div class="section-head">
+      <div class="section-title">Property <span>Listings</span></div>
+      <div class="section-sub">Browse verified properties across India & Tamil Nadu</div>
+    </div>
+    <div class="search-bar">
+      <span style="color:var(--text-dim);font-size:1.1rem">Search</span>
+      <input type="text" id="listings-search" placeholder="Search by location, name..." oninput="filterListings()">
+      <button class="btn btn-gold btn-sm" onclick="filterListings()">Search</button>
+    </div>
+    <div class="filter-bar">
+      <div class="filter-chip active" onclick="setFilter('all',this)">All</div>
+      <div class="filter-chip" onclick="setFilter('sale',this)">For Sale</div>
+      <div class="filter-chip" onclick="setFilter('rent',this)">For Rent</div>
+      <div class="filter-chip" onclick="setFilter('plot',this)">Land / Plot</div>
+    </div>
+    <div class="listings-grid" id="listings-grid"></div>
+  </div>
+</div>
+
+<!-- RESULT -->
+<div id="page-result" class="page">
+  <nav>
+    <div class="nav-logo">Estate<span>IQ</span></div>
+    <div class="nav-links">
+      <span class="nav-link" onclick="showPage('home')">Home</span>
+      <span class="nav-link active-link" onclick="showPage('predict')">Predict</span>
+      <span class="nav-link" onclick="showPage('listings')">Listings</span>
+    </div>
+    <div class="nav-user">
+      <div class="avatar clickable" id="nav-avatar4" onclick="openProfilePanel(this)">U</div>
+    </div>
+  </nav>
+  <div class="section-wrap">
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:28px">
+      <button class="btn btn-ghost btn-sm" onclick="showPage('predict')">Back</button>
+      <div class="section-title">Prediction <span>Result</span></div>
+    </div>
+    <div id="result-spinner">
+      <div class="spinner-wrap">
+        <div class="spinner"></div>
+        <div class="spinner-text">Analysing market data and computing valuation...</div>
+      </div>
+    </div>
+    <div id="result-content" style="display:none">
+      <!-- Price Hero -->
+      <div class="result-hero">
+        <div>
+          <div class="result-label">Estimated Market Value</div>
+          <div class="result-price" id="res-price">INR 0</div>
+          <div class="result-price-sub" id="res-range"></div>
+          <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap" id="res-tags"></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px;align-items:center">
+          <div class="result-confidence">
+            <div class="conf-val" id="res-conf">-</div>
+            <div class="conf-label">Confidence Score</div>
+          </div>
+          <div class="result-confidence">
+            <div class="conf-val trend-up" id="res-trend">+8%</div>
+            <div class="conf-label">YoY Growth</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Input Summary -->
+      <div class="chart-wrap" style="margin-bottom:28px">
+        <div class="chart-title">Prediction Input Summary</div>
+        <div class="details-grid" id="details-grid"></div>
+      </div>
+
+      <!-- Recommendations -->
+      <div class="chart-wrap">
+        <div class="chart-title">Similar Properties - Recommendations</div>
+        <div class="reco-list" id="reco-list"></div>
+      </div>
+
+      <div style="margin-top:24px;display:flex;gap:12px;flex-wrap:wrap">
+        <button class="btn btn-gold" onclick="showPage('predict')">New Prediction</button>
+        <button class="btn btn-outline" onclick="showPage('listings')">Explore Properties</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// STATE
+let currentUser = null, activeFilter = 'all', predictionInput = {}, authToken = '', apiProperties = [];
+const API_BASE = 'http://127.0.0.1:8000';
+const AUTH_API_BASE = 'http://127.0.0.1:5000/api/auth';
+const AUTH_TOKEN_KEY = 'auth_token';
+const ADMIN_EMAILS = ['admin@estate.iq'];
+let currentEditingPropertyId = null;
+
+const CITY_MULT = { Chennai:6200, Coimbatore:4800, Madurai:3800, Tiruchirappalli:3400, Salem:3200, Tirunelveli:2900, Erode:3100, Vellore:3300, Bangalore:6800, Hyderabad:5900, Delhi:7200, Mumbai:9800 };
+const BHK_M  = {'1 BHK':0.72,'2 BHK':1,'3 BHK':1.3,'4 BHK':1.6,'5+ BHK':1.9};
+const AGE_M  = {'New Construction':1.15,'0-2 years':1.1,'2-5 years':1.0,'5-10 years':0.9,'10-20 years':0.78,'20+ years':0.65};
+const ZONE_M = {Commercial:1.5,Residential:1.0,Industrial:0.9,Agricultural:0.55};
+const PROX_M = {'0-5 km':1.4,'5-10 km':1.1,'10-20 km':0.85,'20+ km':0.65};
+
+let PROPERTIES = [
+  {id:1, type:'sale',cat:'house',city:'Chennai',name:'3BHK Apartment - Anna Nagar',area:1350,beds:3,baths:2,price:'INR 1.25 Cr',icon:'House',propType:'Apartment'},
+  {id:2, type:'rent',cat:'house',city:'Coimbatore',name:'2BHK Flat - Saibaba Colony',area:850,beds:2,baths:2,price:'INR 16,000/mo',icon:'Home',propType:'Apartment'},
+  {id:3, type:'plot',cat:'land',city:'Madurai',name:'Corner Plot - Bypass Road',area:3200,price:'INR 38 L',icon:'Plot',zone:'Residential'},
+  {id:4, type:'plot',cat:'land',city:'Erode',name:'Industrial Plot - SIPCOT',area:5500,price:'INR 55 L',icon:'Site',zone:'Industrial'}
+];
+
+function isAdminUser() {
+  const email = (currentUser?.email || '').toLowerCase();
+  return ADMIN_EMAILS.includes(email);
+}
+
+function openAdminAddModal() {
+  if (!isAdminUser()) return;
+  currentEditingPropertyId = null;
+  document.getElementById('admin-modal-title').textContent = 'Add Property';
+  document.getElementById('admin-modal-submit').textContent = 'Create Property';
+  document.getElementById('a-cat').value = 'house';
+  document.getElementById('a-type').value = 'sale';
+  document.getElementById('a-name').value = '';
+  document.getElementById('a-city').value = '';
+  document.getElementById('a-price').value = '';
+  document.getElementById('a-area').value = '';
+  document.getElementById('a-kind').value = '';
+  document.getElementById('a-beds').value = '';
+  document.getElementById('a-baths').value = '';
+  document.getElementById('admin-add-modal').classList.add('show');
+  document.getElementById('admin-add-err').textContent = '';
+}
+
+function closeAdminAddModal() {
+  document.getElementById('admin-add-modal').classList.remove('show');
+}
+
+function openAdminEditModal(id) {
+  if (!isAdminUser()) return;
+  const item = PROPERTIES.find((x) => String(x.id) === String(id));
+  if (!item) return;
+  currentEditingPropertyId = item.id;
+  document.getElementById('admin-modal-title').textContent = 'Edit Property';
+  document.getElementById('admin-modal-submit').textContent = 'Save Changes';
+  document.getElementById('a-cat').value = item.cat || 'house';
+  document.getElementById('a-type').value = item.type || 'sale';
+  document.getElementById('a-name').value = item.name || '';
+  document.getElementById('a-city').value = item.city || '';
+  document.getElementById('a-price').value = item.price || '';
+  document.getElementById('a-area').value = item.area || '';
+  document.getElementById('a-kind').value = item.cat === 'house' ? (item.propType || '') : (item.zone || '');
+  document.getElementById('a-beds').value = item.beds ?? '';
+  document.getElementById('a-baths').value = item.baths ?? '';
+  document.getElementById('admin-add-err').textContent = '';
+  document.getElementById('admin-add-modal').classList.add('show');
+}
+
+function deletePropertyAdmin(id) {
+  if (!isAdminUser()) return;
+  const ok = window.confirm('Delete this property?');
+  if (!ok) return;
+  PROPERTIES = PROPERTIES.filter((x) => String(x.id) !== String(id));
+  renderListings();
+  showToast('Property deleted.', 'success');
+}
+
+function createPropertyFromAdmin() {
+  const err = document.getElementById('admin-add-err');
+  const cat = document.getElementById('a-cat').value;
+  const type = document.getElementById('a-type').value;
+  const name = document.getElementById('a-name').value.trim();
+  const city = document.getElementById('a-city').value.trim();
+  const price = document.getElementById('a-price').value.trim();
+  const area = Number(document.getElementById('a-area').value);
+  const kind = document.getElementById('a-kind').value.trim();
+  const beds = Number(document.getElementById('a-beds').value || 0);
+  const baths = Number(document.getElementById('a-baths').value || 0);
+
+  if (!name || !city || !price || !area) {
+    err.textContent = 'Please fill name, city, price and area.';
+    return;
+  }
+
+  const item = {
+    id: currentEditingPropertyId || Date.now(),
+    type: cat === 'land' ? 'plot' : type,
+    cat,
+    city,
+    name,
+    area,
+    price,
+    icon: cat === 'land' ? 'Plot' : 'House'
+  };
+
+  if (cat === 'house') {
+    item.beds = beds;
+    item.baths = baths;
+    item.propType = kind || 'Apartment';
+  } else {
+    item.zone = kind || 'Residential';
+  }
+
+  if (currentEditingPropertyId) {
+    const idx = PROPERTIES.findIndex((x) => String(x.id) === String(currentEditingPropertyId));
+    if (idx >= 0) PROPERTIES[idx] = item;
+  } else {
+    PROPERTIES.unshift(item);
+  }
+  currentEditingPropertyId = null;
+  closeAdminAddModal();
+  renderListings();
+  showToast('Property saved.', 'success');
+}
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const page = document.getElementById('page-' + name);
+  if (page) page.classList.add('active');
+  if (name === 'listings') renderListings();
+  applyUserUI();
+}
+
+function applyUserUI() {
+  if (!currentUser?.name) return;
+  const ch = currentUser.name[0].toUpperCase();
+  ['nav-avatar','nav-avatar2','nav-avatar3','nav-avatar4'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (currentUser.profilePicture) {
+      el.textContent = '';
+      el.style.backgroundImage = `url('${currentUser.profilePicture}')`;
+      el.style.backgroundColor = 'transparent';
+    } else {
+      el.textContent = ch;
+      el.style.backgroundImage = 'none';
+      el.style.backgroundColor = 'var(--gold-dim)';
+    }
+  });
+}
+
+function openProfilePanel(anchorEl) {
+  if (!currentUser) return;
+  const overlay = document.getElementById('profile-overlay');
+  const panel = document.getElementById('profile-panel');
+  overlay.classList.add('show');
+  panel.classList.add('show');
+
+  if (anchorEl?.getBoundingClientRect) {
+    const rect = anchorEl.getBoundingClientRect();
+    const panelWidth = panel.offsetWidth || 360;
+    const margin = 10;
+    let left = rect.right - panelWidth;
+    let top = rect.bottom + 8;
+
+    left = Math.max(margin, Math.min(left, window.innerWidth - panelWidth - margin));
+    top = Math.max(margin, Math.min(top, window.innerHeight - panel.offsetHeight - margin));
+
+    panel.style.left = `${left}px`;
+    panel.style.top = `${top}px`;
+  }
+
+  document.getElementById('profile-name-input').value = currentUser.name || '';
+  document.getElementById('profile-email').value = currentUser.email || '';
+  const preview = document.getElementById('profile-picture-preview');
+  preview.src = currentUser.profilePicture || '';
+  preview.style.display = currentUser.profilePicture ? 'block' : 'none';
+  document.getElementById('profile-msg').textContent = '';
+}
+
+function closeProfilePanel() {
+  document.getElementById('profile-overlay').classList.remove('show');
+  document.getElementById('profile-panel').classList.remove('show');
+}
+
+function triggerProfilePictureInput() {
+  document.getElementById('profile-picture-input')?.click();
+}
+
+function previewProfilePicture(input) {
+  const file = input?.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const preview = document.getElementById('profile-picture-preview');
+    preview.src = e.target?.result || '';
+    preview.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+async function saveProfileUpdates() {
+  const msg = document.getElementById('profile-msg');
+  const name = document.getElementById('profile-name-input').value.trim();
+  const picture = document.getElementById('profile-picture-input')?.files?.[0];
+  if (!name) { msg.textContent = 'Name is required.'; return; }
+
+  try {
+    const token = localStorage.getItem(AUTH_TOKEN_KEY);
+    const formData = new FormData();
+    formData.append('name', name);
+    if (picture) formData.append('profilePicture', picture);
+
+    const res = await fetch(`${AUTH_API_BASE}/profile`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData
+    });
+    const data = await res.json();
+    if (!res.ok) { msg.textContent = data.message || 'Update failed.'; return; }
+
+    currentUser = data.user;
+    document.getElementById('profile-picture-input').value = '';
+    msg.style.color = 'var(--success)';
+    msg.textContent = 'Profile updated successfully.';
+    applyUserUI();
+    showToast('Profile updated.', 'success');
+    openProfilePanel(document.getElementById('nav-avatar'));
+  } catch (_e) {
+    msg.style.color = 'var(--danger)';
+    msg.textContent = 'Unable to update profile.';
+  }
+}
+
+// AUTH
+async function handleLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass  = document.getElementById('login-password').value;
+  const err   = document.getElementById('login-err');
+  if (!email || !pass) { err.textContent = 'Please fill all fields.'; return; }
+  err.textContent = '';
+
+  try {
+    const res = await fetch(`${AUTH_API_BASE}/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password: pass })
+    });
+    const data = await res.json();
+    if (!res.ok) { err.textContent = data.message || 'Login failed.'; return; }
+
+    authToken = data.token || '';
+    localStorage.setItem(AUTH_TOKEN_KEY, authToken);
+    currentUser = data.user || { name: 'User', email };
+    showToast('Welcome back, ' + currentUser.name + '!', 'success');
+    showPage('home');
+  } catch (_e) {
+    err.textContent = 'Unable to connect to auth server. Make sure backend is running.';
+  }
+}
+
+async function handleSignup() {
+  const name  = document.getElementById('signup-name').value.trim();
+  const email = document.getElementById('signup-email').value.trim();
+  const pass  = document.getElementById('signup-password').value;
+  const pic   = document.getElementById('signup-picture')?.files?.[0];
+  const err   = document.getElementById('signup-err');
+  if (!name || !email || !pass) { err.textContent = 'Please fill all fields.'; return; }
+  if (pass.length < 6) { err.textContent = 'Password must be at least 6 characters.'; return; }
+  err.textContent = '';
+
+  try {
+    const formData = new FormData();
+    formData.append('name', name);
+    formData.append('email', email);
+    formData.append('password', pass);
+    if (pic) formData.append('profilePicture', pic);
+
+    const res = await fetch(`${AUTH_API_BASE}/register`, {
+      method: 'POST',
+      body: formData
+    });
+    const data = await res.json();
+    if (!res.ok) { err.textContent = data.message || 'Signup failed.'; return; }
+
+    authToken = data.token || '';
+    localStorage.setItem(AUTH_TOKEN_KEY, authToken);
+    currentUser = data.user || { name, email };
+    showToast('Account created! Welcome, ' + currentUser.name, 'success');
+    showPage('home');
+  } catch (_e) {
+    err.textContent = 'Unable to connect to auth server. Make sure backend is running.';
+  }
+}
+
+function handleLogout() {
+  currentUser = null;
+  authToken = '';
+  localStorage.removeItem(AUTH_TOKEN_KEY);
+  closeAdminAddModal();
+  closeProfilePanel();
+  showToast('Logged out.', '');
+  showPage('login');
+}
+
+async function loadProfileFromToken() {
+  const token = localStorage.getItem(AUTH_TOKEN_KEY);
+  if (!token) return;
+
+  try {
+    const res = await fetch(`${AUTH_API_BASE}/profile`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const data = await res.json();
+    if (!res.ok || !data.user) {
+      localStorage.removeItem(AUTH_TOKEN_KEY);
+      return;
+    }
+    authToken = token;
+    currentUser = data.user;
+    showPage('home');
+  } catch (_e) {
+    // Keep login page if auth service is unavailable.
+  }
+}
+// TABS
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ['house','land'][i] === name));
+  document.querySelectorAll('.tab-panel').forEach((p,i) => p.classList.toggle('active', ['house','land'][i] === name));
+}
+
+// PREDICTION
+function runPrediction(type) {
+  if (type === 'house') {
+    const city  = document.getElementById('h-city').value;
+    const ptype = document.getElementById('h-type').value;
+    const bed   = document.getElementById('h-bed').value;
+    const bath  = document.getElementById('h-bath').value;
+    const age   = document.getElementById('h-age').value;
+    const area  = parseFloat(document.getElementById('h-area').value);
+    const trans = document.getElementById('h-trans').value;
+    const floor = document.getElementById('h-floor').value;
+    const err   = document.getElementById('predict-err');
+    if (!city || !bed || !bath || !age || !area || !trans) { err.textContent = 'Please fill all required fields.'; return; }
+    err.textContent = '';
+    const base = CITY_MULT[city] || 3000;
+    const raw  = area * base * (BHK_M[bed]||1) * (AGE_M[age]||1) * (1 + (parseInt(bath)-1)*0.04);
+    predictionInput = { type:'house', city, ptype, bed, bath, age, area, trans, floor, price: trans==='Rent' ? raw*0.003 : raw, isRent: trans==='Rent' };
+  } else {
+    const city = document.getElementById('l-city').value;
+    const zone = document.getElementById('l-zone').value;
+    const area = parseFloat(document.getElementById('l-area').value);
+    const road = document.getElementById('l-road').value;
+    const prox = document.getElementById('l-prox').value;
+    const err  = document.getElementById('predict-land-err');
+    if (!city || !zone || !area || !prox) { err.textContent = 'Please fill all required fields.'; return; }
+    err.textContent = '';
+    const base = CITY_MULT[city] || 3000;
+    const raw  = area * base * (ZONE_M[zone]||1) * (PROX_M[prox]||1) * 0.7;
+    predictionInput = { type:'land', city, zone, area, road, prox, price:raw, isRent:false };
+  }
+  showPage('result');
+  displayResult();
+}
+
+function displayResult() {
+  document.getElementById('result-spinner').style.display = 'block';
+  document.getElementById('result-content').style.display = 'none';
+  setTimeout(() => {
+    document.getElementById('result-spinner').style.display = 'none';
+    document.getElementById('result-content').style.display = 'block';
+    const p = predictionInput;
+    const price  = Math.round(p.price);
+    const low    = Math.round(price * 0.92);
+    const high   = Math.round(price * 1.08);
+    const conf   = (88 + Math.random()*9).toFixed(1) + '%';
+    const growth = (5 + Math.random()*8).toFixed(1);
+    document.getElementById('res-price').textContent = fmt(price, p.isRent);
+    document.getElementById('res-range').textContent = `Estimated Range: ${fmt(low,p.isRent)} - ${fmt(high,p.isRent)}`;
+    document.getElementById('res-conf').textContent  = conf;
+    document.getElementById('res-trend').textContent = `+${growth}%`;
+    // Tags
+    const tagsEl = document.getElementById('res-tags');
+    tagsEl.innerHTML = '';
+    [p.city, p.type==='house' ? p.bed : p.zone, p.type==='house' ? (p.isRent ? 'Rent' : 'Sale') : 'Land Plot']
+      .filter(Boolean).forEach(t => { const d=document.createElement('div'); d.className='tag'; d.textContent=t; tagsEl.appendChild(d); });
+    // Details grid
+    const detailsEl = document.getElementById('details-grid');
+    const details = p.type === 'house'
+      ? [{l:'Location',v:p.city},{l:'Property Type',v:p.ptype||'-'},{l:'Bedrooms',v:p.bed},{l:'Toilets',v:p.bath},{l:'Property Age',v:p.age},{l:'Area',v:p.area+' sq ft'},{l:'Transaction',v:p.trans},{l:'Floor',v:p.floor||'-'}]
+      : [{l:'Location',v:p.city},{l:'Zone',v:p.zone},{l:'Area',v:p.area+' sq ft'},{l:'Road Facing',v:p.road||'-'},{l:'City Distance',v:p.prox}];
+    detailsEl.innerHTML = details.map(d => `<div class="detail-card"><div class="detail-label">${d.l}</div><div class="detail-val">${d.v}</div></div>`).join('');
+    buildRecos();
+  }, 1800);
+}
+
+function fmt(val, isRent) {
+  if (isRent) {
+    if (val >= 100000) return 'INR '+(val/100000).toFixed(2)+' L/mo';
+    return 'INR '+val.toLocaleString('en-IN')+'/mo';
+  }
+  if (val >= 10000000) return 'INR '+(val/10000000).toFixed(2)+' Cr';
+  if (val >= 100000)   return 'INR '+(val/100000).toFixed(2)+' L';
+  return 'INR '+val.toLocaleString('en-IN');
+}
+
+function buildRecos() {
+  const p = predictionInput;
+  let similar = PROPERTIES.filter(prop =>
+    p.type === 'land' ? prop.cat === 'land' : prop.cat === 'house'
+  );
+  // Prefer same city first
+  const sameCity = similar.filter(x => x.city === p.city);
+  const others   = similar.filter(x => x.city !== p.city);
+  similar = [...sameCity, ...others].slice(0, 6);
+  document.getElementById('reco-list').innerHTML = similar.map(prop => `
+    <div class="reco-item" onclick="showPage('listings')">
+      <div>
+        <div class="reco-name">${prop.icon} ${prop.name}</div>
+        <div class="reco-loc">Location: ${prop.city} - ${prop.cat==='house' ? prop.propType : 'Plot - '+prop.zone}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <a class="map-btn" title="Open in Google Maps" href="${openPropertyMap(String(prop.name), String(prop.city))}" rel="noopener noreferrer" onclick="event.stopPropagation()"><img src="https://maps.gstatic.com/favicon3.ico" alt="Google Maps"></a>
+        <div class="reco-price">${prop.price}</div>
+      </div>
+    </div>`).join('');
+}
+
+function openPropertyMap(name, city) {
+  const q = encodeURIComponent(`${name}, ${city}, India`);
+  return `https://www.google.com/maps/search/?api=1&query=${q}`;
+}
+
+// LISTINGS
+function renderListings() {
+  const search = (document.getElementById('listings-search')||{value:''}).value.toLowerCase();
+  const filtered = PROPERTIES.filter(p => {
+    const mf = activeFilter==='all' || p.type===activeFilter;
+    const ms = !search || p.name.toLowerCase().includes(search) || p.city.toLowerCase().includes(search);
+    return mf && ms;
+  });
+  const grid = document.getElementById('listings-grid');
+  if (!filtered.length) { grid.innerHTML='<p style="color:var(--text-muted);padding:24px">No properties found.</p>'; return; }
+  const cards = filtered.map(p => {
+    const bc = p.type==='sale' ? 'badge-sale' : p.type==='rent' ? 'badge-rent' : 'badge-plot';
+    const bt = p.type==='sale' ? 'For Sale' : p.type==='rent' ? 'For Rent' : 'Plot';
+    const meta = p.cat==='house'
+      ? `<div class="prop-meta-item">${p.beds} Beds</div><div class="prop-meta-item">${p.baths} Bath</div><div class="prop-meta-item">${p.area} sqft</div>`
+      : `<div class="prop-meta-item">${p.area} sqft</div><div class="prop-meta-item">${p.zone}</div>`;
+    const adminActions = isAdminUser()
+      ? `<button class="admin-mini-btn" title="Edit" onclick="openAdminEditModal('${String(p.id)}')">✎</button>
+         <button class="admin-mini-btn" title="Delete" onclick="deletePropertyAdmin('${String(p.id)}')">🗑</button>`
+      : '';
+    return `<div class="prop-card">
+      <div class="prop-img-wrap">
+        <div class="prop-img">${p.icon}</div>
+        <div class="prop-badge ${bc}">${bt}</div>
+      </div>
+      <div class="prop-body">
+        <div class="prop-head-row">
+          <div class="prop-loc">Location: ${p.city}</div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <a class="map-btn" title="Open in Google Maps" href="${openPropertyMap(String(p.name), String(p.city))}" rel="noopener noreferrer"><img src="https://maps.gstatic.com/favicon3.ico" alt="Google Maps"></a>
+            ${adminActions}
+          </div>
+        </div>
+        <div class="prop-name">${p.name}</div>
+        <div class="prop-price">${p.price}</div>
+        <div class="prop-meta">${meta}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const adminCard = isAdminUser()
+    ? `<div class="prop-card admin-add-card" onclick="openAdminAddModal()">
+         <div class="admin-add-inner">
+           <div class="admin-add-plus">+</div>
+           <div>Add New Property</div>
+         </div>
+       </div>`
+    : '';
+
+  grid.innerHTML = adminCard + cards;
+}
+
+function filterListings() { renderListings(); }
+function setFilter(f, el) {
+  activeFilter = f;
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderListings();
+}
+
+// TOAST
+function showToast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = type ? 'show '+type : 'show';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.className=''; }, 3000);
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  const id = document.querySelector('.page.active')?.id;
+  if (id === 'page-login')  handleLogin();
+  if (id === 'page-signup') handleSignup();
+});
+
+loadProfileFromToken();
+</script>
+</body>
+</html>
+
